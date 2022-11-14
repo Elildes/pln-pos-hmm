@@ -5,75 +5,14 @@ import nltk
 from nltk.corpus.reader import TaggedCorpusReader
 from collections import defaultdict
 from collections import Counter
-
-# Observação: antes de rodar esta aplicação, veja as dependências no final deste arquivo.
-
-# 1ª PARTE: 'Treino' (usando o corpus de treino; no caso do Penn Treebank usar Seções 0-18):
-
-# Definição do HMM - Hidden Markov Model pelas Matrizes A (probabilidade de transição) e B (probabilidades de observação de palavras dadas tags)
+from nltk.tokenize import word_tokenize
 
 '''
-Matriz Aij de probabilidades P(ti|ti-1) de transição entre os estado ocultos (part-of-speech tags):
-Possue linhas (i) são as tags anteriores e colunas (j) são as tags atuais.
-A primeira linha da matriz A, <s>, corresponde ao estado inicial de cada tag atual (coluna j).
+Classe principal que imtegra todas os métodoa para a execução da aplicação.
 '''
-
-
-
-'''
-Matriz B de probabilidades de observação de palavras dadas tags:
-Possue bi(ot), onde linhas (i) são as tags possíveis de cada word e colunas (ot) são as palavras/sequência de T_observações (texto de saída), extraídas de um vocabulário ??.
-'''
-
-
-
-'''
-Matriz O é a rede de Virtebi que calcula a melhor sequência de estado oculto para a sequencia de observação do texto de saída.
-Possue linhas (qi) que são as possíveis tags e colunas (oj) de n estados (words/saídas).
-A matriz tem início na coluna 1 (pela 1ª word do texto) pelo valor (máximo) viterbi[s,t], calculado pelo algoritmo de Virtebi em cada posição da matriz,
-através do produto do pi (conjunto das probabilidades do estado inicial qi, que foi pego da entrada <s>, primeira
-linha da matriz A) e a probabilidade de observação da 1ª word do texto dado a tag para essa célula.
-'''
-
-'''
-Tokenizar o corpus/texto
-'''
-#sentence = nltk.corpus.gutenberg.words( 'austen-emma.txt' )
-#sentence = "At eight o'clock on Thursday morning Arthur didn't feel very good."
-#tokens = nltk.word_tokenize(sentence)
-#print(tokens)
-#print(sentence)
-
-#tagged = nltk.pos_tag(tokens)
-#print(tagged[0:6])
-
-
-
-test_sent = ["We",
-            "have",
-            "learned",
-            "much",
-            "about",
-            "interstellar",
-            "drives",
-            "since",
-            "a",
-            "hundred",
-            "years",
-            "ago",
-            "that",
-            "is",
-            "all",
-            "I",
-            "can",
-            "tell",
-            "you",
-            "about",
-            "them",
-            ]
-
 class pos_tagger():
 
+    # Construtor que irá iniciar as variáveis.
     def __init__(self):
         self.unknown_prob = 0.0000000000001
         self.tagged_file = glob.glob("brown/*")
@@ -114,21 +53,29 @@ class pos_tagger():
                 self.tag_word_count[(tag, word)] = 1
         return self.tag_word_count
 
+    # Calcula a probabilidade de transição das tags
     def transition_probabilty(self, tags):
         bigrams = self.ngrams(tags, 2)
         for bigram in bigrams:
             self.transition_probabilities[bigram] = self.bigram_cnt[bigram] / self.unigram_cnt[bigram[0]]
         return self.transition_probabilities
 
+    # Calcula a probabilidade de emissão da word/tag
     def emmission_probabilty(self, tagged_words):
         for tag, word in tagged_words:
             self.emmission_probabilities[tag, word] = self.tag_word_count[tag, word] / self.tag_count[tag]
         return self.emmission_probabilities
 
+    # Calcula a probabilidade incial de um tag ser a primeira na sentença
     def initial_probabilities(self, tag):
         return self.transition_probabilities["START", tag]
 
-    def vertibi(self, observable, in_states):
+    '''
+    Algoritmo de Viterbi encontra a probabilidade mais alta dada para uma palavra em todas as nossas
+    tags examinando nossas probabilidades de transmissão e emissão, multiplicando as probabilidades e,
+    em seguida, encontrando a probabilidade máxima.
+    '''
+    def viterbi(self, observable, in_states):
         states = set(in_states)
         states.remove("START")
         states.remove("END")
@@ -147,16 +94,44 @@ class pos_tagger():
             k = sorted([(trails[k, o], k) for k in states])[-1][1]
             best_path.append((observable[o], k))
         best_path.reverse()
+        lista_pred_tag = []
         for x in best_path:
-            print(str(x[0]) + "," + str(x[1]))
+            #print(str(x[0]) + "," + str(x[1]))
+            lista_pred_tag.append(str(x[1]))    # salvar as tags na lista
+        funcoes.save_dic_arq(lista_pred_tag, "lista_pred_tag.txt")  # salvar a lista de tags preditiva em arquivo
         return best_path
 
-    # muda as words em minpusculas
+    # muda as words em minúsculas
     def clean(self, word):
         word = re.sub('\s+', '', word.lower())      
         return word
 
-    # Extrai as tags do corpus                    
+    """
+    Gera Dicionário de Testes: extrair a sequências de palavras de um corpus (words_tag)
+    Entrada: lista = ['The/at', 'Fulton/np-tl',  'County/nn-tl', ...]
+    Formato de saída: Ex.: dicio_teste = ['the', 'Fulton', 'County', (...)]
+    """
+    def split_dicio_teste(self, dicio, teste):
+        lista_words = []  # guarda a sequência de words
+        lista_tags = []    # guarda a sequência de tags
+
+        # busca palavras/tag no dicio
+        for pos in dicio:
+            pos = pos.strip()     # retorna cópia da string
+            pos = pos.lower()     # converte a string em minúscula
+            # separa word de tag: adiciona nova lista de words e tag na lista usando '/' como delimitador
+            words_tag = pos.split("/")
+
+            if len(words_tag) == 2:
+                lista_words.append(words_tag[0])   # salva as words na lista
+                lista_tags.append(words_tag[1])    # salva as tags na lista
+            else: continue
+
+        if (teste == "word"): return lista_words
+        if (teste == "tag"): return lista_tags
+        else: return []
+
+    # Treino do Brown Corpus
     def tag(self):
         reader_corpus = TaggedCorpusReader('.', self.tagged_file)
 
@@ -168,7 +143,7 @@ class pos_tagger():
                 if tag is None or tag in ['NIL']:
                     continue
                 all_tags.append(tag)
-                #word = self.clean(word)
+                word = self.clean(word)
                 word = ""
                 tagged_words.append((tag, word))
             all_tags.append("END")
@@ -185,34 +160,50 @@ class pos_tagger():
         funcoes.save_dic_arq(tagged_words, 'tagged_words.txt')
         funcoes.save_dic_arq(all_tags, 'all_tags.txt')
 
-        # ERRO ????????????????????
-        #self.tag_test(all_tags)
+        # Testing:
+        # Abre o arquivos corpus e salva o conteúdo numa lista/array (dicionário de testes)
+        # Saída: texto = [word1/tag1 word2/tag2 ...]
+        dicio_teste = []
+        with open("ca03.txt", "r") as file:    
+            dicio_teste = file.read()
 
-        # Testing
-        with open("dicio_teste.txt", 'r') as arquivo_teste:
-            dicio_teste = arquivo_teste.read()
-            # TESTE
-            #print(dicio_teste)
-            #cleaned_test_sent = [self.clean(w) for w in dicio_teste]
-            seq_pos_tagging_hmm = self.vertibi(list(dicio_teste), all_tags)
-            funcoes.save_dic_arq(seq_pos_tagging_hmm, "seq_pos_tagging_hmm.txt")
-            print(seq_pos_tagging_hmm)
+        # Testes
+        dicio_teste = "The/at Fulton/np-tl County/nn-tl Grand/jj-tl Jury/nn-tl said/vbd Friday/nr an/at investigation/nn of/in Atlanta's/np$ recent/jj primary/nn election/nn produced/vbd ``/`` no/at evidence/nn ''/'' that/cs any/dti irregularities/nns took/vbd place/nn ./. The/at jury/nn further/rbr said/vbd in/in term-end/nn presentments/nns that/cs the/at City/nn-tl Executive/jj-tl Committee/nn-tl ,/, which/wdt had/hvd over-all/jj charge/nn of/in the/at election/nn ,/, ``/`` deserves/vbz the/at praise/nn and/cc thanks/nns of/in the/at City/nn-tl of/in-tl Atlanta/np-tl ''/'' for/in the/at manner/nn in/in which/wdt the/at election/nn was/bedz conducted/vbn ./."
+
+        # Tokeniza o dicinário de testes.
+        # Entrada: texto = [word1/tag1 word2/tag2 ...]
+        # Saída: dicio = ['word1/tag1', 'word2/tag2', ...]
+        words_tags_tokens = word_tokenize(dicio_teste)
+        #print(words_tags_tokens)
+
+        # Tokeniza em words ou tags o dicionário de testes.
+        # Saída 01: dicio_word = ['word1', 'word2, ...]
+        # Saída 02: lista_tags - ['tag1', 'tag2', 'tag3', ...]
+        dicio_teste_words = self.split_dicio_teste(words_tags_tokens, "word")
+        lista_real_tag = self.split_dicio_teste(words_tags_tokens, "tag")
+
+        # Teste:
+        #dicio_teste_words = ['the', 'fulton', 'county', 'grand', 'jury', 'said', 'friday', 'an', 'investigation', 'of']
+        #dicio_teste_words = ['several', 'defendants', 'in', 'the', 'summerdale', 'police', 'burglary', 'trial', 'made', 'statements']
+
+        
+        # salva o dicionário de teste e lista real de tag em arquivo
+        funcoes.save_dic_arq(dicio_teste_words, 'dicio_teste_words.txt')
+        funcoes.save_dic_arq(lista_real_tag, 'lista_real_tag.txt')
+
+        # Teste: Imprime lista de words e tags
+        #print(dicio_teste_words)
+        #print(lista_real_tag)
+
+        # POS tagging usando HMM e Algoritmo de Viterbi
+        # Entrada: ['word1', 'word2, ...]
+        # Saída: lista = ['The/at', 'Fulton/np-tl', 'County/nn-tl', 'Grand/jj-tl', ...]
+        seq_pos_tagging_hmm = self.viterbi(dicio_teste_words, all_tags)
+        funcoes.save_dic_arq(seq_pos_tagging_hmm, "seq_pos_tagging_hmm.txt")
+        #print(seq_pos_tagging_hmm)
+
+        print("Fim do programa!!")
+
 
 ps = pos_tagger()
 ps.tag()
-
-
-"""
-Lista de dependências:
-Linux: 
-. Python: sudo apt-get install python3: 
-. Pip3: sudo apt-get install python3-pip
-. Scikit-learn: pip install -U scikit-learn
-. NLTK: https://www.nltk.org/install.html
-Windows:
-. Python: https://www.python.org/downloads/
-. Pip 22.3: já incluso no python 3.11
-. Scikit-learn: https://scikit-learn.org/dev/install.html
-. NLTK: https://www.nltk.org/install.html
-Obs.: instale nova dependência, caso seja solicitado 
-"""
