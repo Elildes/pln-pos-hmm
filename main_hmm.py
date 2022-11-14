@@ -23,11 +23,13 @@ class pos_tagger():
         self.transition_probabilities = defaultdict(lambda: self.unknown_prob)
         self.emmission_probabilities = defaultdict(lambda: self.unknown_prob)
 
+    # gerar n-gramas
     def ngrams(self, text, n):
         Ngrams = []
         for i in range(len(text)): Ngrams.append(tuple(text[i: i + n]))
         return Ngrams
 
+    # gerar bi-gramas
     def bigram_counts(self, tags):
         for i_tag_bigram in self.ngrams(tags, 2):
             if i_tag_bigram in self.bigram_cnt:
@@ -36,6 +38,7 @@ class pos_tagger():
                 self.bigram_cnt[i_tag_bigram] = 1
         return self.bigram_cnt
 
+    # gerar uni-gramas
     def unigram_counts(self, tags):
         for tag in tags:
             if tag in self.unigram_cnt:
@@ -168,7 +171,7 @@ class pos_tagger():
             dicio_teste = file.read()
 
         # Testes
-        dicio_teste = "The/at Fulton/np-tl County/nn-tl Grand/jj-tl Jury/nn-tl said/vbd Friday/nr an/at investigation/nn of/in Atlanta's/np$ recent/jj primary/nn election/nn produced/vbd ``/`` no/at evidence/nn ''/'' that/cs any/dti irregularities/nns took/vbd place/nn ./. The/at jury/nn further/rbr said/vbd in/in term-end/nn presentments/nns that/cs the/at City/nn-tl Executive/jj-tl Committee/nn-tl ,/, which/wdt had/hvd over-all/jj charge/nn of/in the/at election/nn ,/, ``/`` deserves/vbz the/at praise/nn and/cc thanks/nns of/in the/at City/nn-tl of/in-tl Atlanta/np-tl ''/'' for/in the/at manner/nn in/in which/wdt the/at election/nn was/bedz conducted/vbn ./."
+        #dicio_teste = "The/at Fulton/np-tl County/nn-tl Grand/jj-tl Jury/nn-tl said/vbd Friday/nr an/at investigation/nn of/in Atlanta's/np$ recent/jj primary/nn election/nn produced/vbd ``/`` no/at evidence/nn ''/'' that/cs any/dti irregularities/nns took/vbd place/nn ./. The/at jury/nn further/rbr said/vbd in/in term-end/nn presentments/nns that/cs the/at City/nn-tl Executive/jj-tl Committee/nn-tl ,/, which/wdt had/hvd over-all/jj charge/nn of/in the/at election/nn ,/, ``/`` deserves/vbz the/at praise/nn and/cc thanks/nns of/in the/at City/nn-tl of/in-tl Atlanta/np-tl ''/'' for/in the/at manner/nn in/in which/wdt the/at election/nn was/bedz conducted/vbn ./."
 
         # Tokeniza o dicinário de testes.
         # Entrada: texto = [word1/tag1 word2/tag2 ...]

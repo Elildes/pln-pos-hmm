@@ -31,4 +31,4 @@ Possue bi(ot), onde linhas (i) são as tags possíveis de cada word e colunas (o
 
 Matriz O é a rede de Virtebi que calcula a melhor sequência de estado oculto para a sequencia de observação do texto de saída.  
 Possue linhas (qi) que são as possíveis tags e colunas (oj) de n estados (words/saídas).  
-A matriz tem início na coluna 1 (pela 1ª word do texto) pelo valor (máximo) viterbi[s,t], calculado pelo algoritmo de Virtebi em cada posição da matriz, através do produto do pi (conjunto das probabilidades do estado inicial qi, que foi pego da entrada <s>, primeira linha da matriz A) e a probabilidade de observação da 1ª word do texto dado a tag para essa célula.  
+A matriz tem início na coluna 1 (pela 1ª word do texto) pelo valor (máximo) viterbi[s,t], calculado pelo algoritmo de Virtebi em cada posição da matriz, através do produto do pi (conjunto das probabilidades do estado inicial qi, que foi pego da entrada, primeira linha da matriz A) e a probabilidade de observação da 1ª word do texto dado a tag para essa célula.  
