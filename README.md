@@ -24,7 +24,7 @@ Windows:
 
 Matriz Aij de probabilidades P(ti|ti-1) de transição entre os estado ocultos (part-of-speech tags):  
 Possue linhas (i) são as tags anteriores e colunas (j) são as tags atuais.  
-A primeira linha da matriz A, <s>, corresponde ao estado inicial de cada tag atual (coluna j).  
+A primeira linha da matriz A, corresponde ao estado inicial de cada tag atual (coluna j).  
 
 Matriz B de probabilidades de observação de palavras dadas tags:  
 Possue bi(ot), onde linhas (i) são as tags possíveis de cada word e colunas (ot) são as palavras/sequência de T_observações (texto de saída), extraídas de um vocabulário ??.  
