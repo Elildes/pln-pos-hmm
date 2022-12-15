@@ -146,9 +146,9 @@ class pos_tagger():
                 if tag is None or tag in ['NIL']:
                     continue
                 all_tags.append(tag)
+                tagged_words.append((tag, word))
                 word = self.clean(word)
                 word = ""
-                tagged_words.append((tag, word))
             all_tags.append("END")
 
         self.tag_word_counts(tagged_words)
